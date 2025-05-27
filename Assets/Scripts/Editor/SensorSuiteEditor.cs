@@ -8,12 +8,12 @@ public class SensorSuiteEditor : Editor
     private bool showSensorToggles = true;
     private bool showStatusInfo = true;
     private bool showAdvancedSettings = false;
-    private readonly Color headerColor = new Color(0.7f, 0.85f, 1f, 1f);           
-    private readonly Color sectionColor = new Color(0.85f, 0.92f, 1f, 0.3f);       
-    private readonly Color accentColor = new Color(0.4f, 0.7f, 1f, 1f);            
-    private readonly Color successColor = new Color(0.6f, 0.9f, 0.8f, 1f);         
-    private readonly Color warningColor = new Color(1f, 0.9f, 0.6f, 1f);           
-    private readonly Color errorColor = new Color(1f, 0.7f, 0.7f, 1f);             
+    private readonly Color headerColor = new Color(0.7f, 0.85f, 1f, 1f);
+    private readonly Color sectionColor = new Color(0.85f, 0.92f, 1f, 0.3f);
+    private readonly Color accentColor = new Color(0.4f, 0.7f, 1f, 1f);
+    private readonly Color successColor = new Color(0.6f, 0.9f, 0.8f, 1f);
+    private readonly Color warningColor = new Color(1f, 0.9f, 0.6f, 1f);
+    private readonly Color errorColor = new Color(1f, 0.7f, 0.7f, 1f);
     private GUIStyle headerStyle;
     private GUIStyle sectionStyle;
     private GUIStyle buttonStyle;
@@ -25,7 +25,7 @@ public class SensorSuiteEditor : Editor
     }
     private void InitializeStyles()
     {
-        if (headerStyle != null) return; 
+        if (headerStyle != null) return;
         headerStyle = new GUIStyle(EditorStyles.boldLabel)
         {
             fontSize = 16,
@@ -97,6 +97,39 @@ public class SensorSuiteEditor : Editor
         EditorGUILayout.BeginVertical(sectionStyle);
         EditorGUILayout.LabelField("⚡ Quick Actions", EditorStyles.boldLabel);
         EditorGUILayout.Space(5);
+
+        // Auto-Start Toggle Section
+        EditorGUILayout.BeginVertical(GUI.skin.box);
+        EditorGUILayout.LabelField("🚀 Auto-Start Configuration", EditorStyles.boldLabel);
+
+        SerializedProperty autoStartProp = serializedObject.FindProperty("autoStartDataCollection");
+        if (autoStartProp != null)
+        {
+            Color originalBg = GUI.backgroundColor;
+            GUI.backgroundColor = autoStartProp.boolValue ? successColor : Color.white;
+
+            EditorGUILayout.BeginHorizontal();
+            bool newValue = EditorGUILayout.Toggle("🚀 Auto-Start Data Collection on App Launch", autoStartProp.boolValue);
+            autoStartProp.boolValue = newValue;
+            EditorGUILayout.EndHorizontal();
+
+            GUI.backgroundColor = originalBg;
+
+            if (autoStartProp.boolValue)
+            {
+                EditorGUILayout.HelpBox("✅ Data collection will start automatically when the app launches and all sensors are ready.", MessageType.Info);
+            }
+            else
+            {
+                EditorGUILayout.HelpBox("⏸️ Data collection requires manual start (default behavior).", MessageType.None);
+            }
+        }
+        else
+        {
+            EditorGUILayout.HelpBox("❌ Auto-start property not found! Please check SensorSuite script.", MessageType.Error);
+        }
+        EditorGUILayout.EndVertical();
+        EditorGUILayout.Space(10);
         EditorGUILayout.BeginHorizontal();
         Color originalColor = GUI.backgroundColor;
         if (sensorSuite.IsCollecting)
@@ -207,6 +240,8 @@ public class SensorSuiteEditor : Editor
             {
                 DrawStatusItem("Collection Active", sensorSuite.IsCollecting ? "✅ Running" : "⏸️ Stopped",
                     sensorSuite.IsCollecting ? successColor : warningColor);
+                DrawStatusItem("Auto-Start Enabled", sensorSuite.AutoStartDataCollection ? "🚀 Yes" : "⏸️ No",
+                    sensorSuite.AutoStartDataCollection ? successColor : warningColor);
                 DrawStatusItem("Data Points Collected", sensorSuite.TotalDataPointsCollected.ToString("N0"),
                     accentColor);
                 string currentSubject = "None";
@@ -319,12 +354,12 @@ public class SensorSuiteEditor : Editor
     private bool IsPropertyShownElsewhere(string propertyName)
     {
         string[] shownProperties = {
-            "eyeTrackingFrequency", "imuSamplingFrequency", "lightSensorFrequency",
+            "autoStartDataCollection", "eyeTrackingFrequency", "imuSamplingFrequency", "lightSensorFrequency",
             "audioSamplingFrequency", "videoCaptureInterval", "audioRecordingSegmentLength",
             "collectEyeTrackingData", "collectIMUData", "collectFacialData",
             "collectLightData", "collectCameraData", "collectAudioData",
             "collectVideoData", "recordAudioFiles",
-            "m_Script" 
+            "m_Script"
         };
         foreach (string shown in shownProperties)
         {
@@ -332,4 +367,6 @@ public class SensorSuiteEditor : Editor
         }
         return false;
     }
+
+
 }

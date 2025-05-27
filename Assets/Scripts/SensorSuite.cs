@@ -12,12 +12,13 @@ public class SensorSuite : MonoBehaviour
 {
     public static SensorSuite Instance { get; private set; }
     [Header("Data Collection Settings")]
-    [SerializeField] private float eyeTrackingFrequency = 60f; 
-    [SerializeField] private float imuSamplingFrequency = 30f; 
-    [SerializeField] private float lightSensorFrequency = 1f; 
-    [SerializeField] private float audioSamplingFrequency = 10f; 
-    [SerializeField] private float videoCaptureInterval = 0.5f; 
-    [SerializeField] private float audioRecordingSegmentLength = 10f; 
+    [SerializeField] private bool autoStartDataCollection = false;
+    [SerializeField] private float eyeTrackingFrequency = 60f;
+    [SerializeField] private float imuSamplingFrequency = 30f;
+    [SerializeField] private float lightSensorFrequency = 1f;
+    [SerializeField] private float audioSamplingFrequency = 10f;
+    [SerializeField] private float videoCaptureInterval = 0.5f;
+    [SerializeField] private float audioRecordingSegmentLength = 10f;
     [SerializeField] private bool collectEyeTrackingData = true;
     [SerializeField] private bool collectIMUData = true;
     [SerializeField] private bool collectFacialData = true;
@@ -75,6 +76,7 @@ public class SensorSuite : MonoBehaviour
     };
     public bool IsCollecting => isCollecting;
     public int TotalDataPointsCollected => totalDataPointsCollected;
+    public bool AutoStartDataCollection => autoStartDataCollection;
     void Awake()
     {
         if (Instance == null)
@@ -134,6 +136,12 @@ public class SensorSuite : MonoBehaviour
             StartCoroutine(InitializeVideoCamera());
         }
         Debug.Log("SensorSuite ready for data collection");
+
+        if (autoStartDataCollection)
+        {
+            Debug.Log("Auto-starting data collection...");
+            StartDataCollection();
+        }
     }
     private void InitializeFacialExpressionData()
     {
@@ -636,7 +644,7 @@ public class SensorSuite : MonoBehaviour
             if (!segmentCompleted && recordingException != null)
             {
                 Debug.LogError($"Error in audio file recording: {recordingException.Message}");
-                yield return new WaitForSeconds(1.0f); 
+                yield return new WaitForSeconds(1.0f);
             }
         }
     }
@@ -742,7 +750,7 @@ public class SensorSuite : MonoBehaviour
             writer.Write("WAVE".ToCharArray());
             writer.Write("fmt ".ToCharArray());
             writer.Write(16);
-            writer.Write((short)1); 
+            writer.Write((short)1);
             writer.Write((short)clip.channels);
             writer.Write(clip.frequency);
             writer.Write(clip.frequency * clip.channels * 2);
@@ -761,9 +769,9 @@ public class SensorSuite : MonoBehaviour
         var frame = new SensorDataFrame
         {
             timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
-            studySelection = "DefaultStudy", 
-            taskLoad = "Medium", 
-            pathType = "Default" 
+            studySelection = "DefaultStudy",
+            taskLoad = "Medium",
+            pathType = "Default"
         };
         if (sensorAccess.AccelerometerAvailable && Accelerometer.current != null)
         {
@@ -826,7 +834,7 @@ public class SensorSuite : MonoBehaviour
         row[index++] = sensorData.taskLoad;
         row[index++] = sensorData.pathType;
         row[index++] = "PUPIL_DATA";
-        row[index++] = ""; 
+        row[index++] = "";
         row[index++] = pupilData.Eye.ToString();
         row[index++] = geometricData.EyeOpenness.ToString("F4");
         row[index++] = geometricData.EyeInSkullPosition.x.ToString("F4");
@@ -841,14 +849,14 @@ public class SensorSuite : MonoBehaviour
         bool staticDataValid = !staticData.Equals(default(StaticData));
         row[index++] = staticDataValid ? staticData.EyeWidthMax.ToString("F4") : "N/A";
         row[index++] = staticDataValid ? staticData.EyeHeightMax.ToString("F4") : "N/A";
-        row[index++] = "N/A"; 
-        row[index++] = "N/A"; 
-        row[index++] = "N/A"; 
-        row[index++] = "N/A"; 
-        row[index++] = "N/A"; 
-        row[index++] = "N/A"; 
-        row[index++] = "N/A"; 
-        row[index++] = "N/A"; 
+        row[index++] = "N/A";
+        row[index++] = "N/A";
+        row[index++] = "N/A";
+        row[index++] = "N/A";
+        row[index++] = "N/A";
+        row[index++] = "N/A";
+        row[index++] = "N/A";
+        row[index++] = "N/A";
         AddSensorDataToRow(row, ref index, sensorData);
         return row;
     }
@@ -861,8 +869,8 @@ public class SensorSuite : MonoBehaviour
         row[index++] = sensorData.taskLoad;
         row[index++] = sensorData.pathType;
         row[index++] = "IMU_DATA";
-        row[index++] = ""; 
-        for (int i = 0; i < 21; i++) 
+        row[index++] = "";
+        for (int i = 0; i < 21; i++)
         {
             row[index++] = "N/A";
         }
@@ -894,17 +902,17 @@ public class SensorSuite : MonoBehaviour
         row[index++] = sensorData.cameraForward.y.ToString("F4");
         row[index++] = sensorData.cameraForward.z.ToString("F4");
         row[index++] = sensorData.luxValue >= 0 ? sensorData.luxValue.ToString("F2") : "N/A";
-        row[index++] = "N/A"; 
-        row[index++] = "N/A"; 
-        row[index++] = "N/A"; 
-        row[index++] = !string.IsNullOrEmpty(currentAudioFileName) ? currentAudioFileName : "N/A"; 
-        row[index++] = "N/A"; 
-        row[index++] = "N/A"; 
-        row[index++] = "N/A"; 
-        row[index++] = "N/A"; 
-        row[index++] = "N/A"; 
-        row[index++] = "N/A"; 
-        row[index++] = "N/A"; 
+        row[index++] = "N/A";
+        row[index++] = "N/A";
+        row[index++] = "N/A";
+        row[index++] = !string.IsNullOrEmpty(currentAudioFileName) ? currentAudioFileName : "N/A";
+        row[index++] = "N/A";
+        row[index++] = "N/A";
+        row[index++] = "N/A";
+        row[index++] = "N/A";
+        row[index++] = "N/A";
+        row[index++] = "N/A";
+        row[index++] = "N/A";
         for (int i = 0; i < sensorData.facialExpressions.Length; i++)
         {
             row[index++] = sensorData.facialExpressions[i];
@@ -939,14 +947,14 @@ public class SensorSuite : MonoBehaviour
         row[index++] = audioLevel.ToString("F4");
         row[index++] = audioPeak.ToString("F4");
         row[index++] = audioRMS.ToString("F4");
-        row[index++] = !string.IsNullOrEmpty(currentAudioFileName) ? currentAudioFileName : "N/A"; 
-        row[index++] = "N/A"; 
-        row[index++] = "N/A"; 
-        row[index++] = "N/A"; 
-        row[index++] = "N/A"; 
-        row[index++] = "N/A"; 
-        row[index++] = "N/A"; 
-        row[index++] = "N/A"; 
+        row[index++] = !string.IsNullOrEmpty(currentAudioFileName) ? currentAudioFileName : "N/A";
+        row[index++] = "N/A";
+        row[index++] = "N/A";
+        row[index++] = "N/A";
+        row[index++] = "N/A";
+        row[index++] = "N/A";
+        row[index++] = "N/A";
+        row[index++] = "N/A";
         for (int i = 0; i < sensorData.facialExpressions.Length; i++)
         {
             row[index++] = sensorData.facialExpressions[i];
@@ -980,7 +988,7 @@ public class SensorSuite : MonoBehaviour
         {
             for (int i = 0; i < 21; i++) row[index++] = "N/A";
             AddSensorDataToRow(row, ref index, sensorData);
-            row[csvHeaders.Length - 12] = value; 
+            row[csvHeaders.Length - 12] = value;
         }
         else
         {
